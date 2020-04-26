@@ -9,12 +9,15 @@ var apiRoutes         = require('./routes/api.js');
 var fccTestingRoutes  = require('./routes/fcctesting.js');
 var runner            = require('./test-runner');
 
+
+const dotenv = require('dotenv');
+dotenv.config();
+
 var app = express();
 
 app.use('/public', express.static(process.cwd() + '/public'));
 
 app.use(cors({origin: '*'})); //For FCC testing purposes only
-
 
 
 app.use(bodyParser.json());
