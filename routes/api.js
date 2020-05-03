@@ -4,29 +4,21 @@ var expect = require('chai').expect;
 var MongoClient = require('mongodb').MongoClient;
 var ObjectId = require('mongodb').ObjectID;
 var Mongoose = require('mongoose');
+var assert = require('assert');
 const dotenv = require('dotenv');
 dotenv.config();
 
+
 const CONNECTION_STRING = process.env.DB;
-
-MongoClient.connect(CONNECTION_STRING, function(err, db){
-  if(err == null) {
-    console.log("Connected successfully to the server");
-  } else {
-    console.log(err);
-  }
-});
-
 
 var Schema = Mongoose.Schema;
 
 var issueSchema = new Schema({
   issue_title: {type: String, required: true},
-  created_by : {type: String, required : true},
-  issue_text : {type: String, required: true},
-  assigned_to : {type: String},
-  status : {type: Boolean}
+  created_by : {type: String, required: true},
+  issue_text : {type: String, required: true}
 });
+
 
 module.exports = function (app) {
 
@@ -38,12 +30,11 @@ module.exports = function (app) {
     })
     
     .post(function (req, res){
+
       var project = req.params.project;
       var info = req.query.issue_text;
       var createdBy = req.query.created_by;
       var title = req.query.issue_title;
-
-
 
       if(info == "" || info == null) {
         res.send("issue_text missing");
@@ -52,6 +43,35 @@ module.exports = function (app) {
       } else if(title == "" || title == null){
         res.send("issue_title missing");
       } else {
+        MongoClient.connect(CONNECTION_STRING, function(err, client){
+          assert.equal(null, err);
+          var db = client.db('Issues');
+
+          var issueModel = Mongoose.model('Issue', issueSchema);
+          
+         var newIssue = new issueModel({
+           issue_title: title,
+           created_by: createdBy,
+           issue_text : info,
+         });
+
+          db.collection('issues-data').insertOne(, function(err, result){
+            assert.equal(null, err);
+            console.log("Item inserted");
+          });
+        });
+      }
+      
+       
+         
+
+         newIssue.save((err, data) => {
+            console.log("In save");
+            if(err) return done(err);
+            return done(null, data);
+         });
+
+        
       }
     
     })
