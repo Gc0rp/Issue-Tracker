@@ -36,16 +36,25 @@ module.exports = function (app) {
     
     .post(function (req, res){
 
+      console.log(req.params);
       var project = req.params.project;
-      var info = req.query.issue_text;
-      var createdBy = req.query.created_by;
-      var title = req.query.issue_title;
-      var assignedTo = req.query.assigned_to;
-      var status = req.query.status_text;
+      var info = req.params.issue_text;
+      var createdBy = req.params.created_by;
+      var title = req.params.issue_title;
+      var assignedTo = req.params.assigned_to;
+      var status = req.params.status_text;
 
+      console.log("Project : " + project);
+      console.log("Info : " + info);
+      console.log("CreatedBy : " + createdBy);
+      console.log("title : " + title);
+      console.log("assignedTo : " + assignedTo);
       if(info == "" || info == null) {
+        
+        
         res.send("issue_text missing");
       } else if(createdBy == "" || createdBy == null){
+        
         res.send("created_by missing");
       } else if(title == "" || title == null){
         res.send("issue_title missing");
@@ -63,24 +72,21 @@ module.exports = function (app) {
             issue_text : info,
             assigned_to : assignedTo,
             status_text : status
-          });
-
-          var projectModel = Mongoose.model('Project', projectSchema);
-
-          var newProject = new projectModel({
-            project_name : project,
-            project_issues : []
-          });
-
-          db.collection('issues-data').findOne({project_name: project}, function(err, project) {
-           if(err){
-            db.collection('issues-data').insertOne(newProject, function(err, result){
-              assert.equal(null, err);
             });
-            res.send("Project successfully created");
-           }
-            res.send("Project found");
-          })
+
+            var projectModel = Mongoose.model('Project', projectSchema);
+
+          db.collection('issues-data').findOneAndUpdate({project_name : project}, 
+            {"$push" : {project_issues : {"$each" : [newIssue]}}}, function(err, project){
+
+              if(err){
+                res.send(err);
+              } else if(project.value == null) {
+                res.send("Project Not Found");
+              } else {
+                res.send("Issue Succesfully Added");
+              }
+          });
       });
     }
   })
